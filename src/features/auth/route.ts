@@ -2,15 +2,25 @@ import { Elysia } from "elysia";
 import { loginBodySchema, signupBodySchema } from "./schema";
 import { prisma } from "../../lib/prisma";
 import { reverseGeocodingAPI } from "../../lib/geoapify";
+import { jwt } from "@elysiajs/jwt";
+import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "../../config/constant";
+import { getExpTimestamp } from "../../lib/util";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
+  .use(
+    jwt({
+      name: "jwt",
+      secret: Bun.env.JWT_SECRET!,
+    })
+  )
   .post(
     "/sign-in",
-    async ({ body }) => {
+    async ({ body, jwt, cookie: { auth } }) => {
       // match user email
       const user = await prisma.user.findUnique({
         where: { email: body.email },
         select: {
+          id: true,
           email: true,
           password: true,
         },
@@ -29,8 +39,47 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       if (!matchPassword) {
         throw new Error("INCORRECT_ACC_DATA");
       }
+
+      // create access token
+      const accessToken = await jwt.sign({
+        sub: user.id,
+        exp: getExpTimestamp(ACCESS_TOKEN_EXP),
+      });
+      auth.set({
+        value: accessToken,
+        httpOnly: true,
+        maxAge: ACCESS_TOKEN_EXP,
+        path: "/",
+      });
+
+      // create refresh token
+      const refreshToken = await jwt.sign({
+        sub: user.id,
+        exp: getExpTimestamp(REFRESH_TOKEN_EXP),
+      });
+      auth.set({
+        value: refreshToken,
+        httpOnly: true,
+        maxAge: REFRESH_TOKEN_EXP,
+        path: "/",
+      });
+
+      // set user profile as online
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          isOnline: true,
+          refreshToken,
+        },
+      });
+
       return {
         message: "Sig-in successfully",
+        data: {
+          user: updatedUser,
+        },
       };
     },
     {
