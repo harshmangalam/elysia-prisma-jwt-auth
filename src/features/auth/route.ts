@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { loginBodySchema, signupBodySchema } from "./schema";
+import { prisma } from "../../lib/prisma";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
@@ -16,17 +17,30 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
   .post(
     "/sign-up",
-    ({ body }) => {
-      try {
-        return {
-          message: "Account created successfully",
-        };
-      } catch (err) {
-        console.log(err);
-      }
+    async ({ body }) => {
+      const user = await prisma.user.create({
+        data: {
+          ...body,
+        },
+      });
+      return {
+        message: "Account created successfully",
+        data: {
+          user,
+        },
+      };
     },
     {
       body: signupBodySchema,
+      error({ code, set }) {
+        switch (code as unknown) {
+          case "P2002":
+            set.status = "Conflict";
+            return {
+              error: "Email already exists",
+            };
+        }
+      },
     }
   )
   .post("/logout", () => {
