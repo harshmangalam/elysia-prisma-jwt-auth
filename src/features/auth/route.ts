@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { loginSchema, signupSchema } from "./schema";
+import { loginBodySchema, signupBodySchema } from "./schema";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
@@ -10,16 +10,24 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         data: body,
       };
     },
-    loginSchema
+    {
+      body: loginBodySchema,
+    }
   )
   .post(
     "/sign-up",
     ({ body }) => {
-      return {
-        message: "Account created successfully",
-      };
+      try {
+        return {
+          message: "Account created successfully",
+        };
+      } catch (err) {
+        console.log(err);
+      }
     },
-    signupSchema
+    {
+      body: signupBodySchema,
+    }
   )
   .post("/logout", () => {
     return {
