@@ -7,6 +7,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     ({ body }) => {
       return {
         message: "Sig-in successfully",
+        data: body,
       };
     },
     loginSchema
