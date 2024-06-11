@@ -32,12 +32,13 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     },
     {
       body: signupBodySchema,
-      error({ code, set }) {
+      error({ code, set, body }) {
         switch (code as unknown) {
+          // handle duplicate email
           case "P2002":
             set.status = "Conflict";
             return {
-              error: "Email already exists",
+              error: `The email address provided ${body.email} already exists`,
             };
         }
       },
