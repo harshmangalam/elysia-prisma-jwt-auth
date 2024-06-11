@@ -1,6 +1,7 @@
 import { Elysia } from "elysia";
 import { loginBodySchema, signupBodySchema } from "./schema";
 import { prisma } from "../../lib/prisma";
+import { reverseGeocodingAPI } from "../../lib/geoapify";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
@@ -18,9 +19,23 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/sign-up",
     async ({ body }) => {
+      // hash password
+      const password = await Bun.password.hash(body.password, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+
+      // fetch user location from lat & lon
+      let location: any;
+      if (body.location) {
+        const [lat, lon] = body.location;
+        location = await reverseGeocodingAPI(lat, lon);
+      }
       const user = await prisma.user.create({
         data: {
           ...body,
+          password,
+          location,
         },
       });
       return {
