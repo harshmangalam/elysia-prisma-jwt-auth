@@ -15,7 +15,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
   .post(
     "/sign-in",
-    async ({ body, jwt, cookie: { auth } }) => {
+    async ({ body, jwt, cookie: { accessToken, refreshToken } }) => {
       // match user email
       const user = await prisma.user.findUnique({
         where: { email: body.email },
@@ -41,24 +41,24 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }
 
       // create access token
-      const accessToken = await jwt.sign({
+      const accessJWTToken = await jwt.sign({
         sub: user.id,
         exp: getExpTimestamp(ACCESS_TOKEN_EXP),
       });
-      auth.set({
-        value: accessToken,
+      accessToken.set({
+        value: accessJWTToken,
         httpOnly: true,
         maxAge: ACCESS_TOKEN_EXP,
         path: "/",
       });
 
       // create refresh token
-      const refreshToken = await jwt.sign({
+      const refreshJWTToken = await jwt.sign({
         sub: user.id,
         exp: getExpTimestamp(REFRESH_TOKEN_EXP),
       });
-      auth.set({
-        value: refreshToken,
+      refreshToken.set({
+        value: refreshJWTToken,
         httpOnly: true,
         maxAge: REFRESH_TOKEN_EXP,
         path: "/",
@@ -71,7 +71,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         },
         data: {
           isOnline: true,
-          refreshToken,
+          refreshToken: refreshJWTToken,
         },
       });
 
