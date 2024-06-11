@@ -19,14 +19,15 @@ enum UserRole {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  name      String    @db.VarChar(60)
-  email     String    @unique
-  password  String
-  location  Json?
-  isAdult   Boolean   @default(false)
-  isOnline  Boolean?  @default(false)
-  role      UserRole? @default(User)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(uuid())
+  name         String    @db.VarChar(60)
+  email        String    @unique
+  password     String
+  location     Json?
+  isAdult      Boolean   @default(false)
+  isOnline     Boolean?  @default(false)
+  role         UserRole? @default(User)
+  refreshToken String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
