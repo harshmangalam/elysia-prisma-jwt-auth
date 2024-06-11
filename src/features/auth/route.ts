@@ -6,14 +6,44 @@ import { reverseGeocodingAPI } from "../../lib/geoapify";
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/sign-in",
-    ({ body }) => {
+    async ({ body }) => {
+      // match user email
+      const user = await prisma.user.findUnique({
+        where: { email: body.email },
+        select: {
+          email: true,
+          password: true,
+        },
+      });
+
+      if (!user) {
+        throw new Error("INCORRECT_ACC_DATA");
+      }
+
+      // match password
+      const matchPassword = await Bun.password.verify(
+        body.password,
+        user.password,
+        "bcrypt"
+      );
+      if (!matchPassword) {
+        throw new Error("INCORRECT_ACC_DATA");
+      }
       return {
         message: "Sig-in successfully",
-        data: body,
       };
     },
     {
       body: loginBodySchema,
+      error({ error, set }) {
+        if (error.message === "INCORRECT_ACC_DATA") {
+          set.status = "Bad Request";
+          return {
+            name: "Bad Request",
+            message: "The email address or password you entered is incorrect",
+          };
+        }
+      },
     }
   )
   .post(
@@ -53,7 +83,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           case "P2002":
             set.status = "Conflict";
             return {
-              error: `The email address provided ${body.email} already exists`,
+              name: "Conflict",
+              message: `The email address provided ${body.email} already exists`,
             };
         }
       },
