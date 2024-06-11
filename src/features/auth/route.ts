@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { loginSchema } from "./schema";
+import { loginSchema, signupSchema } from "./schema";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
@@ -11,11 +11,15 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     },
     loginSchema
   )
-  .post("/sign-up", () => {
-    return {
-      message: "Account created successfully",
-    };
-  })
+  .post(
+    "/sign-up",
+    ({ body }) => {
+      return {
+        message: "Account created successfully",
+      };
+    },
+    signupSchema
+  )
   .post("/logout", () => {
     return {
       message: "Logout successfully",
