@@ -8,6 +8,26 @@
 - Postgresql
 - Typescript
 
+## Setup
+
+Install dependencies
+
+```
+bun i
+```
+
+Copy `.env.example` to `.env`
+
+```
+cp .env.example .env
+```
+
+Sync prisma schema with db
+
+```
+bun run prisma:push
+```
+
 ## Route
 
 - POST `/api/auth/sign-up` - Create new account
