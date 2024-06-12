@@ -1,5 +1,5 @@
 import { Elysia } from "elysia";
-import { authRoutes } from "./features/auth/route";
+import { authRoutes } from "./route";
 
 const app = new Elysia({ prefix: "/api" }).use(authRoutes).listen(3000);
 

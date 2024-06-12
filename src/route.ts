@@ -1,15 +1,15 @@
 import { Elysia } from "elysia";
 import { loginBodySchema, signupBodySchema } from "./schema";
-import { prisma } from "../../lib/prisma";
-import { reverseGeocodingAPI } from "../../lib/geoapify";
+import { prisma } from "./lib/prisma";
+import { reverseGeocodingAPI } from "./lib/geoapify";
 import { jwt } from "@elysiajs/jwt";
 import {
   ACCESS_TOKEN_EXP,
   JWT_NAME,
   REFRESH_TOKEN_EXP,
-} from "../../config/constant";
-import { getExpTimestamp } from "../../lib/util";
-import { authPlugin } from "../../plugin";
+} from "./config/constant";
+import { getExpTimestamp } from "./lib/util";
+import { authPlugin } from "./plugin";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(
@@ -20,7 +20,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
   .post(
     "/sign-in",
-    async ({ body, jwt, cookie: { accessToken, refreshToken } }) => {
+    async ({ body, jwt, cookie: { accessToken, refreshToken }, set }) => {
       // match user email
       const user = await prisma.user.findUnique({
         where: { email: body.email },
@@ -32,7 +32,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       });
 
       if (!user) {
-        throw new Error("INCORRECT_ACC_DATA");
+        set.status = "Bad Request";
+        throw new Error(
+          "The email address or password you entered is incorrect"
+        );
       }
 
       // match password
@@ -42,7 +45,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         "bcrypt"
       );
       if (!matchPassword) {
-        throw new Error("INCORRECT_ACC_DATA");
+        set.status = "Bad Request";
+        throw new Error(
+          "The email address or password you entered is incorrect"
+        );
       }
 
       // create access token
@@ -89,15 +95,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     },
     {
       body: loginBodySchema,
-      error({ error, set }) {
-        if (error.message === "INCORRECT_ACC_DATA") {
-          set.status = "Bad Request";
-          return {
-            name: "Bad Request",
-            message: "The email address or password you entered is incorrect",
-          };
-        }
-      },
     }
   )
   .post(
@@ -132,14 +129,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     {
       body: signupBodySchema,
       error({ code, set, body }) {
-        switch (code as unknown) {
-          // handle duplicate email
-          case "P2002":
-            set.status = "Conflict";
-            return {
-              name: "Conflict",
-              message: `The email address provided ${body.email} already exists`,
-            };
+        // handle duplicate email error throw by prisma
+        // P2002 duplicate field erro code
+        if ((code as unknown) === "P2002") {
+          set.status = "Conflict";
+          return {
+            name: "Error",
+            message: `The email address provided ${body.email} already exists`,
+          };
         }
       },
     }
