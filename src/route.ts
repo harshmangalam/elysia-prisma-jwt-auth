@@ -90,6 +90,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         message: "Sig-in successfully",
         data: {
           user: updatedUser,
+          accessToekn: accessJWTToken,
+          refreshToken: refreshJWTToken,
         },
       };
     },
@@ -238,6 +240,9 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(authPlugin)
   .get("/me", ({ user }) => {
     return {
-      user,
+      message: "Fetch current user",
+      data: {
+        user,
+      },
     };
   });
