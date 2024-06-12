@@ -2,8 +2,9 @@ import jwt from "@elysiajs/jwt";
 import Elysia from "elysia";
 import { JWT_NAME } from "./config/constant";
 import { prisma } from "./lib/prisma";
+import { User } from "@prisma/client";
 
-export const authPlugin = (app: Elysia) =>
+const authPlugin = (app: Elysia) =>
   app
     .use(
       jwt({
@@ -19,7 +20,7 @@ export const authPlugin = (app: Elysia) =>
       }
       const jwtPayload = await jwt.verify(accessToken.value);
       if (!jwtPayload) {
-        // handle error for access token is tempted ot incorrect
+        // handle error for access token is tempted or incorrect
         set.status = "Forbidden";
         throw new Error("Access token is invalid");
       }
@@ -41,3 +42,5 @@ export const authPlugin = (app: Elysia) =>
         user,
       };
     });
+
+export { authPlugin };
