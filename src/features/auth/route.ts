@@ -3,13 +3,18 @@ import { loginBodySchema, signupBodySchema } from "./schema";
 import { prisma } from "../../lib/prisma";
 import { reverseGeocodingAPI } from "../../lib/geoapify";
 import { jwt } from "@elysiajs/jwt";
-import { ACCESS_TOKEN_EXP, REFRESH_TOKEN_EXP } from "../../config/constant";
+import {
+  ACCESS_TOKEN_EXP,
+  JWT_NAME,
+  REFRESH_TOKEN_EXP,
+} from "../../config/constant";
 import { getExpTimestamp } from "../../lib/util";
+import { authPlugin } from "../../plugin";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(
     jwt({
-      name: "jwt",
+      name: JWT_NAME,
       secret: Bun.env.JWT_SECRET!,
     })
   )
@@ -139,8 +144,19 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       },
     }
   )
-  .post("/logout", () => {
+  .post("/logout", async ({ cookie: { accessToken, refreshToken } }) => {
+    // remove refresh token and access token from cookies
+    accessToken.remove();
+    refreshToken.remove();
+    // remove refresh token from db & set user online status to offline
+
     return {
       message: "Logout successfully",
+    };
+  })
+  .use(authPlugin)
+  .get("/me", ({ user }) => {
+    return {
+      user,
     };
   });
