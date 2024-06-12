@@ -3,7 +3,7 @@ import Elysia from "elysia";
 import { JWT_NAME } from "./config/constant";
 import { prisma } from "./lib/prisma";
 
-export const authenticationPlugin = (app: Elysia) =>
+export const authPlugin = (app: Elysia) =>
   app
     .use(
       jwt({
