@@ -144,12 +144,22 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       },
     }
   )
-  .post("/logout", async ({ cookie: { accessToken, refreshToken } }) => {
+  .use(authPlugin)
+  .post("/logout", async ({ cookie: { accessToken, refreshToken }, user }) => {
     // remove refresh token and access token from cookies
     accessToken.remove();
     refreshToken.remove();
-    // remove refresh token from db & set user online status to offline
 
+    // remove refresh token from db & set user online status to offline
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        isOnline: false,
+        refreshToken: null,
+      },
+    });
     return {
       message: "Logout successfully",
     };
