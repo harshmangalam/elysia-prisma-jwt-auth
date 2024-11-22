@@ -237,7 +237,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       message: "Logout successfully",
     };
   })
-  .use(authPlugin)
   .get("/me", ({ user }) => {
     return {
       message: "Fetch current user",
